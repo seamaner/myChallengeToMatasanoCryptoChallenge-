@@ -2,20 +2,20 @@
 #include <stdlib.h>
 #include <string.h>
 
-static int b2b64(const char* src, const int src_len, char *dst, int dst_len)
+static int base64_encode(const char* src, const int src_len, char *dst, int dst_len)
 {
     char b64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
     int i;
     unsigned char c;
 
-    if (src == NULL || dst == NULL) return -1; 
+    if (src == NULL || dst == NULL) return -1;
 
-    if (dst_len < 
+    if (dst_len <
             (src_len * 4 % 3 ? src_len * 4 / 3 + 3 : src_len * 4 / 3)
-            ) return -1; 
+       ) return -1;
 
     for (i = 0; i < src_len; i += 3) {
-        *dst++ = b64[src[i] >> 2]; 
+        *dst++ = b64[src[i] >> 2];
         if (i + 2 < src_len) {
             c = (src[i] & 0x03) << 4;
             c |= (src[i+1] & 0xf0) >> 4;
@@ -26,8 +26,8 @@ static int b2b64(const char* src, const int src_len, char *dst, int dst_len)
             *dst++ = b64[src[i+2] & 0x3f];
         } else {
             break;
-        }   
-    }   
+        }
+    }
     if (i + 1 < src_len) {
         c = (src[i] & 0x03) << 4;
         c |= (src[i+1] & 0xf0) >> 4;
@@ -42,7 +42,7 @@ static int b2b64(const char* src, const int src_len, char *dst, int dst_len)
     return 0;
 }
 
-static unsigned char char2hex(unsigned char c)
+static unsigned char char2val(unsigned char c)
 {
     if (c >= '0' && c <= '9')
         return c - '0';
@@ -53,16 +53,16 @@ static unsigned char char2hex(unsigned char c)
     return 0;
 }
 
-static int h2bin(const char*hex, char*dst)
+static int hex_decode(const char*hex, char*dst)
 {
     unsigned char c;
 
     if (!hex || !dst)
         return -1;
     while(*hex != '\0') {
-        c = char2hex(hex[0]);
+        c = char2val(hex[0]);
         c <<= 4;
-        c += char2hex(hex[1]);
+        c += char2val(hex[1]);
         *dst++ = c;
         hex += 2;
     }
@@ -71,37 +71,37 @@ static int h2bin(const char*hex, char*dst)
 
 int main(void)
 {
-   char hex[]="49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
-   int hlen = 0, blen = 0;
-   char *bbuf, *b64buf;
+    char hex[]="49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
+    int hlen = 0, blen = 0;
+    char *bbuf, *b64buf;
 
-   hlen = strlen(hex);
-   if (hlen & 0x01) {
-       printf("hex is not correct\n");
-       return -1;
-   }
+    hlen = strlen(hex);
+    if (hlen & 0x01) {
+        printf("hex is not correct\n");
+        return -1;
+    }
 
-   bbuf = (char*)calloc(1, hlen >> 1);
-   if (h2bin(hex, bbuf) != 0) {
-       printf("hex is error\n");
-       return 0;
-   }
+    bbuf = (char*)calloc(1, hlen >> 1);
+    if (hex_decode(hex, bbuf) != 0) {
+        printf("hex is error\n");
+        return 0;
+    }
 
-   blen = hlen * 4 % 3 ? hlen * 4 / 3 + 3 : hlen * 4 / 3;
-   b64buf = (char*)calloc(1, blen + 1);
+    blen = hlen * 4 % 3 ? hlen * 4 / 3 + 3 : hlen * 4 / 3;
+    b64buf = (char*)calloc(1, blen + 1);
 
-   if (b2b64(bbuf, hlen >> 1, b64buf, blen) != 0) {
-       printf("base64 convert error\n");
-       return -1;
-   }
-   b64buf[blen] = '\0';
-   printf("%s\n", b64buf);
-   printf("%s\n", "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t");
-   if (strcmp(b64buf, "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t") == 0)
-       printf("result is ok\n");
-   if (bbuf)
-       free(bbuf);
-   if (b64buf)
-       free(b64buf);
-   return 0;
+    if (base64_encode(bbuf, hlen >> 1, b64buf, blen) != 0) {
+        printf("base64 convert error\n");
+        return -1;
+    }
+    b64buf[blen] = '\0';
+    printf("%s\n", b64buf);
+    printf("%s\n", "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t");
+    if (strcmp(b64buf, "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t") == 0)
+        printf("result is ok\n");
+    if (bbuf)
+        free(bbuf);
+    if (b64buf)
+        free(b64buf);
+    return 0;
 }
